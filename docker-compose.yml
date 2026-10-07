@@ -1,0 +1,129 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: restaurantos-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-restaurantos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-restaurantos}
+      POSTGRES_DB: ${POSTGRES_DB:-restaurantos}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-restaurantos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurantos-net
+
+  # ── Redis ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: restaurantos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurantos-net
+
+  # ── Express Backend ──────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: restaurantos-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-restaurantos}:${POSTGRES_PASSWORD:-restaurantos}@postgres:5432/${POSTGRES_DB:-restaurantos}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-strong-random-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      AI_SERVICE_URL: http://ai-service:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - restaurantos-net
+
+  # ── FastAPI AI Service ───────────────────────────────────
+  ai-service:
+    build:
+      context: .
+      dockerfile: docker/ai-service.Dockerfile
+    container_name: restaurantos-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      AI_SERVICE_HOST: 0.0.0.0
+      AI_SERVICE_PORT: 8000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-restaurantos}:${POSTGRES_PASSWORD:-restaurantos}@postgres:5432/${POSTGRES_DB:-restaurantos}
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - restaurantos-net
+
+  # ── React Frontend ──────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: restaurantos-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:4000/api
+      VITE_WS_URL: ws://localhost:4000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - restaurantos-net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  restaurantos-net:
+    driver: bridge

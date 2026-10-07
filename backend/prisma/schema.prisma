@@ -1,0 +1,226 @@
+// RestaurantOS — Prisma Schema
+// PostgreSQL database schema for restaurant management
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  MANAGER
+  CHEF
+  WAITER
+  CASHIER
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderItemStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  firstName    String     @map("first_name")
+  lastName     String     @map("last_name")
+  role         Role       @default(WAITER)
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  orders    Order[]
+  expenses  Expense[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Table {
+  id             String      @id @default(uuid())
+  number         Int         @unique
+  capacity       Int
+  status         TableStatus @default(AVAILABLE)
+  currentOrderId String?     @map("current_order_id")
+
+  orders Order[]
+
+  @@map("tables")
+}
+
+model MenuCategory {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String @default("")
+  sortOrder   Int    @default(0) @map("sort_order")
+  isActive    Boolean @default(true) @map("is_active")
+
+  items MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  price       Decimal  @db.Decimal(10, 2)
+  categoryId  String   @map("category_id")
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  prepTime    Int      @default(15) @map("prep_time") // minutes
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category    MenuCategory         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  ingredients MenuItemIngredient[]
+  orderItems  OrderItem[]
+
+  @@index([categoryId])
+  @@map("menu_items")
+}
+
+model MenuItemIngredient {
+  menuItemId     String  @map("menu_item_id")
+  ingredientId   String  @map("ingredient_id")
+  quantityNeeded Decimal @map("quantity_needed") @db.Decimal(10, 3)
+
+  menuItem   MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, ingredientId])
+  @@map("menu_item_ingredients")
+}
+
+model Ingredient {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  unit         String
+  currentStock Decimal  @default(0) @map("current_stock") @db.Decimal(10, 3)
+  reorderLevel Decimal  @default(0) @map("reorder_level") @db.Decimal(10, 3)
+  costPerUnit  Decimal  @default(0) @map("cost_per_unit") @db.Decimal(10, 2)
+  supplierId   String?  @map("supplier_id")
+
+  supplier  Supplier?            @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  menuItems MenuItemIngredient[]
+
+  @@index([supplierId])
+  @@map("ingredients")
+}
+
+model Supplier {
+  id            String  @id @default(uuid())
+  name          String
+  contactPerson String  @default("") @map("contact_person")
+  email         String  @default("")
+  phone         String  @default("")
+  address       String  @default("")
+  isActive      Boolean @default(true) @map("is_active")
+
+  ingredients Ingredient[]
+  expenses    Expense[]
+
+  @@map("suppliers")
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  tableId     String      @map("table_id")
+  waiterId    String      @map("waiter_id")
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal     @default(0) @map("total_amount") @db.Decimal(10, 2)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  table  Table       @relation(fields: [tableId], references: [id])
+  waiter User        @relation(fields: [waiterId], references: [id])
+  items  OrderItem[]
+
+  @@index([tableId])
+  @@index([waiterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String          @id @default(uuid())
+  orderId    String          @map("order_id")
+  menuItemId String          @map("menu_item_id")
+  quantity   Int
+  unitPrice  Decimal         @map("unit_price") @db.Decimal(10, 2)
+  notes      String?
+  status     OrderItemStatus @default(PENDING)
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  category    String
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  supplierId  String?  @map("supplier_id")
+  receiptUrl  String?  @map("receipt_url")
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  supplier  Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdBy User      @relation(fields: [createdById], references: [id])
+
+  @@index([date])
+  @@index([category])
+  @@map("expenses")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  changes   Json?
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
