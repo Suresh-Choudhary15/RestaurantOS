@@ -7,6 +7,7 @@ import MenuPage from './pages/MenuPage';
 import InventoryPage from './pages/InventoryPage';
 import SuppliersPage from './pages/SuppliersPage';
 import ExpensesPage from './pages/ExpensesPage';
+import InvoiceProcessing from './pages/InvoiceProcessing';
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
           <Link to="/inventory" className="hover:text-blue-400 transition-colors">Inventory</Link>
           <Link to="/suppliers" className="hover:text-blue-400 transition-colors">Suppliers</Link>
           <Link to="/expenses" className="hover:text-blue-400 transition-colors">Expenses</Link>
+          <Link to="/invoice-processing" className="hover:text-blue-400 transition-colors">Invoice Processing</Link>
         </nav>
 
         {/* Main Content Area */}
@@ -32,6 +34,7 @@ const App = () => {
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/suppliers" element={<SuppliersPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
+            <Route path="/invoice-processing" element={<InvoiceProcessing />} />
             <Route path="/" element={<div className="text-center mt-20">
               <h2 className="text-3xl font-bold">Welcome to RestaurantOS</h2>
               <p className="text-gray-600 mt-2">Please select a module from the sidebar to begin.</p>

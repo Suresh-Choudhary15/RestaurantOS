@@ -14,6 +14,7 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get('/', requirePermission('read', 'expenses'), audit('expenses', { action: 'READ' }), expenseController.getExpenses);
+router.get('/export', requirePermission('read', 'expenses'), audit('expenses', { action: 'EXPORT' }), expenseController.exportExpenses);
 router.post('/', requirePermission('create', 'expenses'), validate(createExpenseSchema), audit('expenses', { action: 'CREATE' }), expenseController.createExpense);
 router.put('/:id', requirePermission('update', 'expenses'), validate(updateExpenseSchema), audit('expenses', { action: 'UPDATE' }), expenseController.updateExpense);
 router.delete('/:id', requirePermission('delete', 'expenses'), validate(expenseIdParamSchema), audit('expenses', { action: 'DELETE' }), expenseController.deleteExpense);
