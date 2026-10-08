@@ -5,6 +5,12 @@ const morgan = require('morgan');
 const compression = require('compression');
 const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth.routes');
+const tableRoutes = require('./routes/table.routes');
+const orderRoutes = require('./routes/order.routes');
+const menuRoutes = require('./routes/menu.routes');
+const inventoryRoutes = require('./routes/inventory.routes');
+const supplierRoutes = require('./routes/supplier.routes');
+const expenseRoutes = require('./routes/expense.routes');
 
 const app = express();
 
@@ -25,6 +31,12 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/tables', tableRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 // Centralized Error Handling
 app.use(errorHandler);
