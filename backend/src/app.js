@@ -12,6 +12,7 @@ const inventoryRoutes = require('./routes/inventory.routes');
 const supplierRoutes = require('./routes/supplier.routes');
 const expenseRoutes = require('./routes/expense.routes');
 const aiRoutes = require('./routes/ai.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Centralized Error Handling
 app.use(errorHandler);

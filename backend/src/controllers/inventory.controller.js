@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
+const { emitLowStockAlert } = require('../lib/socket');
 
 async function getIngredients(req, res, next) {
   try {
@@ -24,6 +25,12 @@ async function updateIngredient(req, res, next) {
       where: { id: req.params.id },
       data: req.body,
     });
+
+    // Check if stock is now low and emit alert
+    if (Number(ingredient.currentStock) <= Number(ingredient.reorderLevel)) {
+      emitLowStockAlert(ingredient);
+    }
+
     return res.status(StatusCodes.OK).json({ status: 'success', data: { ingredient } });
   } catch (err) { next(err); }
 }

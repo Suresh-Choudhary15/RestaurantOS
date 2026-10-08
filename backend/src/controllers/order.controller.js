@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const prisma = require('../lib/prisma');
 const { AppError } = require('../middleware/errorHandler');
+const { emitOrderStatusUpdate, emitOrderItemStatusUpdate, emitNewOrder } = require('../lib/socket');
 
 async function getAllOrders(req, res, next) {
   try {
@@ -77,6 +78,9 @@ async function createOrder(req, res, next) {
       return order;
     });
 
+    // Emit WebSocket event for new order
+    emitNewOrder(result);
+
     return res.status(StatusCodes.CREATED).json({ status: 'success', data: { order: result } });
   } catch (err) {
     next(err);
@@ -101,6 +105,9 @@ async function updateOrder(req, res, next) {
       });
     }
 
+    // Emit WebSocket event for order status update
+    emitOrderStatusUpdate(order);
+
     return res.status(StatusCodes.OK).json({ status: 'success', data: { order } });
   } catch (err) {
     next(err);
@@ -116,6 +123,9 @@ async function updateOrderItem(req, res, next) {
       where: { id },
       data: { status, notes },
     });
+
+    // Emit WebSocket event for order item status update
+    emitOrderItemStatusUpdate(item);
 
     return res.status(StatusCodes.OK).json({ status: 'success', data: { item } });
   } catch (err) {

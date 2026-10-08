@@ -8,6 +8,7 @@ import InventoryPage from './pages/InventoryPage';
 import SuppliersPage from './pages/SuppliersPage';
 import ExpensesPage from './pages/ExpensesPage';
 import InvoiceProcessing from './pages/InvoiceProcessing';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
         {/* Sidebar Navigation */}
         <nav className="w-64 bg-slate-800 text-white p-6 flex flex-col gap-4">
           <h1 className="text-xl font-bold mb-6 border-b border-slate-700 pb-2">RestaurantOS</h1>
+          <Link to="/dashboard" className="hover:text-blue-400 transition-colors">Dashboard</Link>
           <Link to="/tables" className="hover:text-blue-400 transition-colors">Tables</Link>
           <Link to="/orders" className="hover:text-blue-400 transition-colors">Orders</Link>
           <Link to="/menu" className="hover:text-blue-400 transition-colors">Menu</Link>
@@ -28,6 +30,7 @@ const App = () => {
         {/* Main Content Area */}
         <main className="flex-1 p-8">
           <Routes>
+            <Route path="/dashboard" element={<AnalyticsDashboard />} />
             <Route path="/tables" element={<TablesPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/menu" element={<MenuPage />} />
