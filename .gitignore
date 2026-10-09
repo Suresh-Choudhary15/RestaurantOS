@@ -64,3 +64,6 @@ backend/prisma/migrations/**/migration_lock.toml
 .cache/
 .temp/
 tmp/
+
+# OCR language data
+backend/eng.traineddata

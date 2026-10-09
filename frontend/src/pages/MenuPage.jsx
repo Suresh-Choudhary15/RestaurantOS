@@ -90,7 +90,11 @@ const MenuPage = () => {
             menuItems.map((item) => (
               <tr key={item.id}>
                 <td className="border p-2">{item.name}</td>
-                <td className="border p-2">{item.category}</td>
+                <td className="border p-2">
+                  {typeof item.category === "object"
+                    ? (item.category?.name ?? "Uncategorized")
+                    : item.category || "Uncategorized"}
+                </td>
                 <td className="border p-2">${Number(item.price).toFixed(2)}</td>
                 <td className="border p-2">
                   <button

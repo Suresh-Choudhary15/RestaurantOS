@@ -34,12 +34,13 @@ export const orderService = {
   delete: (id) => api.delete(`/orders/${id}`),
 };
 
+
 export const menuService = {
-  getAll: () => api.get("/menu"),
-  getById: (id) => api.get(`/menu/${id}`),
-  create: (data) => api.post("/menu", data),
-  update: (id, data) => api.put(`/menu/${id}`, data),
-  delete: (id) => api.delete(`/menu/${id}`),
+  getAll: () => api.get("/menu/items"),
+  getById: (id) => api.get(`/menu/items/${id}`),
+  create: (data) => api.post("/menu/items", data),
+  update: (id, data) => api.put(`/menu/items/${id}`, data),
+  delete: (id) => api.delete(`/menu/items/${id}`),
 };
 
 export const inventoryService = {
