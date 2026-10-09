@@ -13,6 +13,7 @@ const supplierRoutes = require('./routes/supplier.routes');
 const expenseRoutes = require('./routes/expense.routes');
 const aiRoutes = require('./routes/ai.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const purchaseOrderRoutes = require('./routes/purchaseOrder.routes');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/purchase-orders', purchaseOrderRoutes);
 
 // Centralized Error Handling
 app.use(errorHandler);

@@ -9,6 +9,7 @@ import SuppliersPage from './pages/SuppliersPage';
 import ExpensesPage from './pages/ExpensesPage';
 import InvoiceProcessing from './pages/InvoiceProcessing';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import PurchaseOrdersPage from './pages/PurchaseOrdersPage';
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
           <Link to="/menu" className="hover:text-blue-400 transition-colors">Menu</Link>
           <Link to="/inventory" className="hover:text-blue-400 transition-colors">Inventory</Link>
           <Link to="/suppliers" className="hover:text-blue-400 transition-colors">Suppliers</Link>
+          <Link to="/purchase-orders" className="hover:text-blue-400 transition-colors">Purchase Orders</Link>
           <Link to="/expenses" className="hover:text-blue-400 transition-colors">Expenses</Link>
           <Link to="/invoice-processing" className="hover:text-blue-400 transition-colors">Invoice Processing</Link>
         </nav>
@@ -36,6 +38,7 @@ const App = () => {
             <Route path="/menu" element={<MenuPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
             <Route path="/invoice-processing" element={<InvoiceProcessing />} />
             <Route path="/" element={<div className="text-center mt-20">

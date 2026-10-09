@@ -8,18 +8,20 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String     @map("password_hash")
-  firstName    String     @map("first_name")
-  lastName     String     @map("last_name")
-  role         Role       @default(WAITER)
-  isActive     Boolean    @default(true) @map("is_active")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  auditLogs    AuditLog[]
-  expenses     Expense[]
-  orders       Order[]
+  id             String          @id @default(uuid())
+  email          String          @unique
+  passwordHash   String          @map("password_hash")
+  firstName      String          @map("first_name")
+  lastName       String          @map("last_name")
+  role           Role            @default(WAITER)
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  auditLogs      AuditLog[]
+  expenses       Expense[]
+  orders         Order[]
+  stockMovements StockMovement[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("users")
 }
@@ -77,32 +79,35 @@ model MenuItemIngredient {
 }
 
 model Ingredient {
-  id           String               @id @default(uuid())
-  name         String               @unique
-  unit         String
-  currentStock Decimal              @default(0) @map("current_stock") @db.Decimal(10, 3)
-  reorderLevel Decimal              @default(0) @map("reorder_level") @db.Decimal(10, 3)
-  costPerUnit  Decimal              @default(0) @map("cost_per_unit") @db.Decimal(10, 2)
-  supplierId   String?              @map("supplier_id")
-  supplier     Supplier?            @relation(fields: [supplierId], references: [id])
-  menuItems    MenuItemIngredient[]
+  id             String               @id @default(uuid())
+  name           String               @unique
+  unit           String
+  currentStock   Decimal              @default(0) @map("current_stock") @db.Decimal(10, 3)
+  reorderLevel   Decimal              @default(0) @map("reorder_level") @db.Decimal(10, 3)
+  costPerUnit    Decimal              @default(0) @map("cost_per_unit") @db.Decimal(10, 2)
+  supplierId     String?              @map("supplier_id")
+  supplier       Supplier?            @relation(fields: [supplierId], references: [id])
+  menuItems      MenuItemIngredient[]
+  stockMovements StockMovement[]
+  poItems        PurchaseOrderItem[]
 
   @@index([supplierId])
   @@map("ingredients")
 }
 
 model Supplier {
-  id            String            @id @default(uuid())
-  name          String
-  contactPerson String            @default("") @map("contact_person")
-  email         String            @default("")
-  phone         String            @default("")
-  address       String            @default("")
-  isActive      Boolean           @default(true) @map("is_active")
-  taxId         String?           @map("tax_id")
-  expenses      Expense[]
-  ingredients   Ingredient[]
-  invoices      SupplierInvoice[]
+  id             String            @id @default(uuid())
+  name           String
+  contactPerson  String            @default("") @map("contact_person")
+  email          String            @default("")
+  phone          String            @default("")
+  address        String            @default("")
+  isActive       Boolean           @default(true) @map("is_active")
+  taxId          String?           @map("tax_id")
+  expenses       Expense[]
+  ingredients    Ingredient[]
+  invoices       SupplierInvoice[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("suppliers")
 }
@@ -229,5 +234,95 @@ enum OrderItemStatus {
   PREPARING
   READY
   SERVED
+  CANCELLED
+}
+
+model StockMovement {
+  id           String            @id @default(uuid())
+  ingredientId String            @map("ingredient_id")
+  type         StockMovementType
+  quantity     Decimal           @db.Decimal(10, 3)
+  reason       String
+  reference    String?
+  createdById  String            @map("created_by_id")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  createdBy  User       @relation(fields: [createdById], references: [id])
+
+  @@index([ingredientId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
+
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  supplierId   String              @map("supplier_id")
+  status       PurchaseOrderStatus @default(DRAFT)
+  orderDate    DateTime            @default(now()) @map("order_date")
+  expectedDate DateTime?           @map("expected_date")
+  totalAmount  Decimal             @default(0) @map("total_amount") @db.Decimal(10, 2)
+  notes        String?
+  createdById  String              @map("created_by_id")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  supplier  Supplier            @relation(fields: [supplierId], references: [id])
+  createdBy User                @relation(fields: [createdById], references: [id])
+  items     PurchaseOrderItem[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdById])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String  @id @default(uuid())
+  purchaseOrderId String  @map("purchase_order_id")
+  ingredientId    String  @map("ingredient_id")
+  quantity        Decimal @db.Decimal(10, 3)
+  unitPrice       Decimal @map("unit_price") @db.Decimal(10, 2)
+  total           Decimal @db.Decimal(10, 2)
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  ingredient    Ingredient    @relation(fields: [ingredientId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([ingredientId])
+  @@map("purchase_order_items")
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  location  String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stores")
+}
+
+model ExpenseCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("expense_categories")
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
   CANCELLED
 }
